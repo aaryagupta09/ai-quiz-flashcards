@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MindSparks AI - Integrated Quiz & Flashcard Generator</title>
+  <meta name="description" content="AI-Powered Study Platform that dynamically generates 3D Flashcards with Spaced Repetition and Interactive Quizzes with Instant Explanations.">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              900: '#312e81'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Custom App Styles -->
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+
+  <!-- Celebration Confetti Canvas -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- Toast Notifications Container -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none max-w-sm"></div>
+
+  <!-- NAVIGATION HEADER -->
+  <header class="sticky top-0 z-40 bg-slate-900/80 backdrop-blur-xl border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3 cursor-pointer" onclick="window.app.switchTab('generator')">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+          <i class="fa-solid fa-bolt text-white text-lg"></i>
+        </div>
+        <div>
+          <span class="text-lg font-extrabold brand-font tracking-tight bg-gradient-to-r from-white via-indigo-200 to-purple-300 bg-clip-text text-transparent">
+            MindSparks <span class="text-indigo-400">AI</span>
+          </span>
+          <span class="hidden sm:block text-[10px] text-slate-400 font-medium uppercase tracking-wider">
+            Quiz & Flashcard Studio
+          </span>
+        </div>
+      </div>
+
+      <!-- Quick Deck Switcher -->
+      <div class="hidden md:flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-700/80">
+        <i class="fa-solid fa-layer-group text-indigo-400 text-xs"></i>
+        <label for="global-deck-selector" class="sr-only">Active Deck</label>
+        <select id="global-deck-selector" class="bg-transparent text-xs font-semibold text-slate-200 focus:outline-none cursor-pointer pr-4 max-w-[200px] truncate">
+          <!-- Populated by storage.js -->
+        </select>
+      </div>
+
+      <!-- Header Action Controls -->
+      <div class="flex items-center gap-2">
+        <button type="button" id="btn-toggle-sound" class="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/80 border border-slate-700/60 text-slate-300 transition" title="Toggle Sound FX">
+          <i class="fa-solid fa-volume-high text-indigo-400"></i>
+        </button>
+
+        <button type="button" id="btn-toggle-theme" class="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/80 border border-slate-700/60 text-slate-300 transition" title="Toggle Light/Dark">
+          <i id="theme-toggle-icon" class="fa-solid fa-sun text-amber-400"></i>
+        </button>
+
+        <button type="button" onclick="window.app.switchTab('generator')" class="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition shadow-md shadow-indigo-600/30">
+          <i class="fa-solid fa-plus"></i> New Deck
+        </button>
+      </div>
+
+    </div>
+
+    <!-- SUB-NAVIGATION BAR (Tabs) -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-800/60 overflow-x-auto no-scrollbar">
+      <nav class="flex space-x-1 py-2">
+        <button type="button" data-tab="generator" class="nav-tab-btn flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> AI Generator
+        </button>
+        <button type="button" data-tab="flashcards" class="nav-tab-btn flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition">
+          <i class="fa-solid fa-clone"></i> Flashcards
+        </button>
+        <button type="button" data-tab="quiz" class="nav-tab-btn flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition">
+          <i class="fa-solid fa-circle-question"></i> Quiz Arena
+        </button>
+        <button type="button" data-tab="decks" class="nav-tab-btn flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition">
+          <i class="fa-solid fa-book-bookmark"></i> Deck Manager
+        </button>
+        <button type="button" data-tab="analytics" class="nav-tab-btn flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition">
+          <i class="fa-solid fa-chart-pie"></i> Analytics & SRS
+        </button>
+        <button type="button" data-tab="settings" class="nav-tab-btn flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition">
+          <i class="fa-solid fa-gear"></i> Settings
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- MAIN APP CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- ============================================================ -->
+    <!-- VIEW 1: AI GENERATOR STUDIO                                  -->
+    <!-- ============================================================ -->
+    <section id="view-generator" class="tab-view max-w-3xl mx-auto space-y-6">
+      
+      <!-- Hero Header -->
+      <div class="text-center space-y-2 mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-medium">
+          <i class="fa-solid fa-sparkles"></i> Multi-Engine AI (Gemini • OpenAI • Smart Offline)
+        </div>
+        <h1 class="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
+          Generate Integrated Study Decks in Seconds
+        </h1>
+        <p class="text-sm md:text-base text-slate-400 max-w-xl mx-auto">
+          Transform any topic, raw lecture notes, or document into synchronized 3D Flashcards and graded Quizzes.
+        </p>
+      </div>
+
+      <!-- Generator Configuration Card -->
+      <div class="p-6 md:p-8 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl backdrop-blur-xl space-y-6">
+        
+        <!-- Source Selector Tabs -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Input Source</label>
+          <div class="grid grid-cols-3 gap-2 p-1 bg-slate-950/60 rounded-xl border border-slate-800">
+            <button type="button" data-source="topic" class="gen-source-tab px-3 py-2 rounded-lg text-xs font-bold transition bg-indigo-600 text-white flex items-center justify-center gap-2">
+              <i class="fa-solid fa-lightbulb"></i> Topic
+            </button>
+            <button type="button" data-source="text" class="gen-source-tab px-3 py-2 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white flex items-center justify-center gap-2">
+              <i class="fa-solid fa-file-lines"></i> Paste Notes
+            </button>
+            <button type="button" data-source="file" class="gen-source-tab px-3 py-2 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white flex items-center justify-center gap-2">
+              <i class="fa-solid fa-upload"></i> Upload File
+            </button>
+          </div>
+        </div>
+
+        <!-- SOURCE 1: TOPIC INPUT -->
+        <div id="gen-panel-topic" class="space-y-3">
+          <label for="gen-topic-input" class="block text-xs font-semibold text-slate-300">Enter Study Topic</label>
+          <div class="relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-500 text-sm"></i>
+            <input type="text" id="gen-topic-input" placeholder="e.g. Quantum Computing, Photosynthesis, Kubernetes, French Revolution..." class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950/70 border border-slate-700/80 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition">
+          </div>
+
+          <!-- Suggested Topic Quick Pills -->
+          <div class="flex items-center gap-1.5 flex-wrap pt-1">
+            <span class="text-[11px] text-slate-500">Popular:</span>
+            <button type="button" data-topic="Data Structures & Algorithms" class="topic-pill px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-[11px] font-medium border border-slate-700 transition">DSA</button>
+            <button type="button" data-topic="Photosynthesis" class="topic-pill px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-[11px] font-medium border border-slate-700 transition">Photosynthesis</button>
+            <button type="button" data-topic="Kubernetes" class="topic-pill px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-[11px] font-medium border border-slate-700 transition">Kubernetes</button>
+            <button type="button" data-topic="Python Core & OOP" class="topic-pill px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-[11px] font-medium border border-slate-700 transition">Python</button>
+            <button type="button" data-topic="Machine Learning" class="topic-pill px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-[11px] font-medium border border-slate-700 transition">Machine Learning</button>
+          </div>
+        </div>
+
+        <!-- SOURCE 2: RAW TEXT INPUT -->
+        <div id="gen-panel-text" class="hidden space-y-3">
+          <label for="gen-text-input" class="block text-xs font-semibold text-slate-300">Paste Lecture Notes, Article, or Textbook Summary</label>
+          <textarea id="gen-text-input" rows="6" placeholder="Paste your study material here. The AI will extract core definitions, facts, and create challenging questions..." class="w-full p-4 rounded-xl bg-slate-950/70 border border-slate-700/80 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition font-mono text-xs"></textarea>
+        </div>
+
+        <!-- SOURCE 3: FILE UPLOAD -->
+        <div id="gen-panel-file" class="hidden space-y-3">
+          <label class="block text-xs font-semibold text-slate-300">Upload Text or Markdown Document</label>
+          <div class="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-2xl p-6 text-center cursor-pointer transition bg-slate-950/40" onclick="document.getElementById('gen-file-input').click()">
+            <i class="fa-solid fa-cloud-arrow-up text-3xl text-indigo-400 mb-2"></i>
+            <p class="text-xs text-slate-300 font-semibold mb-1">Click to browse or drag and drop</p>
+            <p class="text-[11px] text-slate-500">Supports .txt, .md, .json, .csv files</p>
+            <input type="file" id="gen-file-input" accept=".txt,.md,.json,.csv" class="hidden">
+          </div>
+
+          <div id="gen-file-preview" class="hidden space-y-2">
+            <span class="text-xs text-slate-400 font-medium">Document Content Preview:</span>
+            <textarea id="gen-file-text" rows="4" readonly class="w-full p-3 rounded-xl bg-slate-950/90 border border-slate-800 text-slate-300 text-xs font-mono"></textarea>
+          </div>
+        </div>
+
+        <!-- Configuration Grid: Items, Difficulty, Question Style, Engine -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
+          
+          <div>
+            <label for="gen-item-count" class="block text-xs font-semibold text-slate-400 mb-1.5">Count</label>
+            <select id="gen-item-count" class="w-full p-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-xs text-white focus:outline-none focus:border-indigo-500">
+              <option value="5" selected>5 items</option>
+              <option value="10">10 items</option>
+              <option value="15">15 items</option>
+              <option value="20">20 items</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="gen-difficulty" class="block text-xs font-semibold text-slate-400 mb-1.5">Difficulty</label>
+            <select id="gen-difficulty" class="w-full p-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-xs text-white focus:outline-none focus:border-indigo-500">
+              <option value="Easy">Easy / Beginner</option>
+              <option value="Medium" selected>Medium</option>
+              <option value="Hard">Hard / Advanced</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="gen-question-type" class="block text-xs font-semibold text-slate-400 mb-1.5">Question Type</label>
+            <select id="gen-question-type" class="w-full p-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-xs text-white focus:outline-none focus:border-indigo-500">
+              <option value="mix" selected>Mixed (MCQ + T/F + Cloze)</option>
+              <option value="mcq">Multiple Choice Only</option>
+              <option value="boolean">True / False Only</option>
+              <option value="blank">Fill in Blank Only</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="gen-ai-provider" class="block text-xs font-semibold text-slate-400 mb-1.5">AI Engine</label>
+            <select id="gen-ai-provider" class="w-full p-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-xs text-white focus:outline-none focus:border-indigo-500">
+              <option value="offline" selected>⚡ Smart Offline (Zero Key)</option>
+              <option value="gemini">✨ Google Gemini 1.5/2.0</option>
+              <option value="openai">🤖 OpenAI GPT-4o-mini</option>
+              <option value="ollama">🦙 Ollama (Local LLM)</option>
+            </select>
+          </div>
+
+        </div>
+
+        <!-- Optional API Key Input (collapsible or displayed when cloud engine selected) -->
+        <div id="gen-api-key-container" class="pt-2">
+          <label for="gen-api-key" class="block text-xs font-semibold text-slate-400 mb-1.5">
+            API Key <span class="text-slate-500 text-[11px]">(Optional if using Smart Offline engine)</span>
+          </label>
+          <input type="password" id="gen-api-key" placeholder="Enter Gemini or OpenAI API Key (or save in Settings)" class="w-full p-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono">
+        </div>
+
+        <!-- Action Button -->
+        <div class="pt-4">
+          <button type="button" id="btn-run-generate" class="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white font-extrabold text-sm md:text-base transition duration-200 shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-3 active:scale-[0.99]">
+            <i id="gen-spinner" class="fa-solid fa-spinner fa-spin hidden text-lg"></i>
+            <i class="fa-solid fa-wand-magic-sparkles text-lg"></i>
+            <span id="gen-btn-text">Generate Flashcards & Quiz</span>
+          </button>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- VIEW 2: 3D FLASHCARD STUDY ARENA                             -->
+    <!-- ============================================================ -->
+    <section id="view-flashcards" class="tab-view hidden space-y-6">
+      
+      <!-- Top Flashcard Toolbar -->
+      <div class="max-w-3xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <span class="text-xs uppercase tracking-wider text-indigo-400 font-bold block">Active Deck</span>
+          <h2 id="header-active-deck-title" class="text-xl md:text-2xl font-bold text-white truncate max-w-md">
+            Study Deck
+          </h2>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap">
+          <!-- Filter buttons -->
+          <div class="flex items-center p-1 bg-slate-900 rounded-xl border border-slate-800 text-xs">
+            <button type="button" data-filter="all" class="fc-filter-btn px-2.5 py-1 rounded-lg font-semibold bg-indigo-600 text-white transition">All</button>
+            <button type="button" data-filter="starred" class="fc-filter-btn px-2.5 py-1 rounded-lg font-semibold text-slate-400 hover:text-white transition"><i class="fa-solid fa-star text-amber-400 mr-1"></i> Starred</button>
+            <button type="button" data-filter="box1" class="fc-filter-btn px-2.5 py-1 rounded-lg font-semibold text-slate-400 hover:text-white transition"><i class="fa-solid fa-repeat text-rose-400 mr-1"></i> Box 1</button>
+          </div>
+
+          <button type="button" id="fc-btn-fullscreen" class="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition" title="Toggle Fullscreen (F)">
+            <i class="fa-solid fa-expand text-xs"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Flashcard Interactive Arena Container -->
+      <div id="flashcard-arena-container" class="max-w-3xl mx-auto flex flex-col items-center justify-center min-h-[460px]">
+        
+        <!-- Render Area for 3D Flashcard -->
+        <div id="flashcard-render-area" class="w-full">
+          <!-- Rendered dynamically by flashcards.js -->
+        </div>
+
+      </div>
+
+      <!-- Progress Bar & Counter -->
+      <div class="max-w-2xl mx-auto space-y-2">
+        <div class="flex items-center justify-between text-xs text-slate-400">
+          <span>Card Progress</span>
+          <span id="flashcard-counter" class="font-bold text-slate-200">1 / 5</span>
+        </div>
+        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+          <div id="flashcard-progress-bar" class="bg-indigo-500 h-full rounded-full transition-all duration-300" style="width: 20%"></div>
+        </div>
+      </div>
+
+      <!-- Leitner Spaced Repetition Rating Controls -->
+      <div class="max-w-2xl mx-auto p-4 rounded-2xl bg-slate-900/80 border border-slate-800 text-center space-y-3">
+        <div class="text-xs font-bold uppercase tracking-wider text-slate-400">
+          How well do you know this card?
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <button type="button" id="fc-rate-again" class="p-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 hover:text-rose-300 text-xs font-bold transition flex items-center justify-center gap-1.5">
+            <kbd class="px-1.5 py-0.5 rounded bg-rose-950/80 border border-rose-800/80 font-mono text-[10px]">1</kbd>
+            <span>Again (Reset)</span>
+          </button>
+          <button type="button" id="fc-rate-hard" class="p-2.5 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 text-orange-400 hover:text-orange-300 text-xs font-bold transition flex items-center justify-center gap-1.5">
+            <kbd class="px-1.5 py-0.5 rounded bg-orange-950/80 border border-orange-800/80 font-mono text-[10px]">2</kbd>
+            <span>Hard</span>
+          </button>
+          <button type="button" id="fc-rate-good" class="p-2.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 hover:text-indigo-300 text-xs font-bold transition flex items-center justify-center gap-1.5">
+            <kbd class="px-1.5 py-0.5 rounded bg-indigo-950/80 border border-indigo-800/80 font-mono text-[10px]">3</kbd>
+            <span>Good (+1)</span>
+          </button>
+          <button type="button" id="fc-rate-easy" class="p-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:text-emerald-300 text-xs font-bold transition flex items-center justify-center gap-1.5">
+            <kbd class="px-1.5 py-0.5 rounded bg-emerald-950/80 border border-emerald-800/80 font-mono text-[10px]">4</kbd>
+            <span>Easy (Master)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Navigation & Action Buttons -->
+      <div class="max-w-2xl mx-auto flex items-center justify-between gap-3">
+        <button type="button" id="fc-btn-prev" class="px-4 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition flex items-center gap-2">
+          <i class="fa-solid fa-arrow-left"></i> Previous
+        </button>
+
+        <div class="flex items-center gap-2">
+          <button type="button" id="fc-btn-shuffle" class="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs transition" title="Shuffle Cards (S)">
+            <i class="fa-solid fa-shuffle"></i>
+          </button>
+          <button type="button" id="fc-btn-flip" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition shadow-lg shadow-indigo-600/30 flex items-center gap-2">
+            <i class="fa-solid fa-arrow-rotate-right"></i> Flip Card (Space)
+          </button>
+        </div>
+
+        <button type="button" id="fc-btn-next" class="px-4 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition flex items-center gap-2">
+          Next <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- VIEW 3: INTERACTIVE QUIZ ARENA                               -->
+    <!-- ============================================================ -->
+    <section id="view-quiz" class="tab-view hidden space-y-6">
+      
+      <!-- Quiz Area (populated by quiz.js) -->
+      <div id="quiz-render-area">
+        <!-- Rendered dynamically -->
+      </div>
+
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- VIEW 4: DECK MANAGER & EDITOR                                -->
+    <!-- ============================================================ -->
+    <section id="view-decks" class="tab-view hidden max-w-4xl mx-auto space-y-6">
+      
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-bold text-white mb-1">Study Deck Manager</h2>
+          <p class="text-xs text-slate-400">View, organize, export, and manage your synchronized decks.</p>
+        </div>
+        <button type="button" id="btn-open-create-deck" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition shadow-md shadow-indigo-600/30 flex items-center gap-2">
+          <i class="fa-solid fa-plus"></i> Create Deck
+        </button>
+      </div>
+
+      <!-- Decks List -->
+      <div id="deck-manager-list" class="space-y-4">
+        <!-- Populated by app.js -->
+      </div>
+
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- VIEW 5: ANALYTICS & SRS MASTERY                              -->
+    <!-- ============================================================ -->
+    <section id="view-analytics" class="tab-view hidden space-y-6">
+      <div id="analytics-render-area">
+        <!-- Populated by analytics.js -->
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- VIEW 6: SETTINGS & BACKUP                                    -->
+    <!-- ============================================================ -->
+    <section id="view-settings" class="tab-view hidden max-w-2xl mx-auto space-y-6">
+      
+      <div>
+        <h2 class="text-2xl font-bold text-white mb-1">Application Settings</h2>
+        <p class="text-xs text-slate-400">Configure AI provider API keys, preferences, and data backup.</p>
+      </div>
+
+      <div class="p-6 md:p-8 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl space-y-6">
+        
+        <!-- Gemini API Key -->
+        <div>
+          <label for="settings-gemini-key" class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+            Google Gemini API Key
+          </label>
+          <input type="password" id="settings-gemini-key" placeholder="AIzaSy..." class="w-full p-3 rounded-xl bg-slate-950/80 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-indigo-500">
+          <span class="text-[11px] text-slate-500 mt-1 block">Get a free API key at <a href="https://aistudio.google.com" target="_blank" class="text-indigo-400 underline">aistudio.google.com</a></span>
+        </div>
+
+        <!-- OpenAI API Key -->
+        <div>
+          <label for="settings-openai-key" class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+            OpenAI API Key
+          </label>
+          <input type="password" id="settings-openai-key" placeholder="sk-..." class="w-full p-3 rounded-xl bg-slate-950/80 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <!-- Quiz Timer -->
+        <div>
+          <label for="settings-quiz-timer" class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+            Quiz Timer (seconds per question)
+          </label>
+          <input type="number" id="settings-quiz-timer" min="10" max="180" value="30" class="w-full p-3 rounded-xl bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <!-- Speech Synthesis Rate -->
+        <div>
+          <label for="settings-speech-rate" class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+            Text-To-Speech Speech Rate
+          </label>
+          <select id="settings-speech-rate" class="w-full p-3 rounded-xl bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-indigo-500">
+            <option value="0.8">0.8x (Slower)</option>
+            <option value="1.0" selected>1.0x (Normal)</option>
+            <option value="1.2">1.2x (Faster)</option>
+          </select>
+        </div>
+
+        <button type="button" id="btn-save-settings" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition shadow-md shadow-indigo-600/30">
+          Save Settings
+        </button>
+
+        <div class="border-t border-slate-800 pt-6 space-y-4">
+          <h3 class="text-sm font-bold text-white uppercase tracking-wider">Data Backup & Sync</h3>
+          <div class="flex items-center gap-3">
+            <button type="button" id="btn-export-backup" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs border border-slate-700 transition flex items-center gap-2">
+              <i class="fa-solid fa-download"></i> Export Backup JSON
+            </button>
+            <button type="button" id="btn-import-backup" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs border border-slate-700 transition flex items-center gap-2">
+              <i class="fa-solid fa-upload"></i> Restore from JSON
+            </button>
+            <input type="file" id="backup-file-input" accept=".json" class="hidden">
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="mt-auto border-t border-slate-800/80 py-6 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div>
+        MindSparks AI • Integrated AI Quiz & Flashcard Generator • MIT Licensed
+      </div>
+      <div class="flex items-center gap-4 text-slate-400">
+        <span>Powered by Gemini & Smart Offline NLP</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Application Scripts -->
+  <script src="/js/audio.js"></script>
+  <script src="/js/storage.js"></script>
+  <script src="/js/generator.js"></script>
+  <script src="/js/flashcards.js"></script>
+  <script src="/js/quiz.js"></script>
+  <script src="/js/analytics.js"></script>
+  <script src="/js/app.js"></script>
+
+</body>
+</html>

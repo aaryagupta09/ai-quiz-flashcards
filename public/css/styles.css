@@ -1,0 +1,165 @@
+/* MindSparks AI Custom Styles & 3D Transitions */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --accent: #8b5cf6;
+  --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+h1, h2, h3, h4, .brand-font {
+  font-family: 'Outfit', sans-serif;
+}
+
+/* 3D Flashcard Flip Mechanics */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.flashcard-wrapper {
+  perspective: 1200px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.flashcard-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 380px;
+  text-align: center;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+  border-radius: 1.25rem;
+}
+
+.flashcard-wrapper.flipped .flashcard-inner {
+  transform: rotateY(180deg);
+}
+
+.flashcard-front,
+.flashcard-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-radius: 1.25rem;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.flashcard-back {
+  transform: rotateY(180deg);
+}
+
+/* Glassmorphism Classes */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-panel-light {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Floating animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+/* Leitner Box Badges */
+.box-badge-1 { background-color: #ef4444; color: white; }
+.box-badge-2 { background-color: #f97316; color: white; }
+.box-badge-3 { background-color: #eab308; color: white; }
+.box-badge-4 { background-color: #3b82f6; color: white; }
+.box-badge-5 { background-color: #10b981; color: white; }
+
+/* Pulse Glow */
+.glow-primary {
+  box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.4);
+}
+
+.glow-accent {
+  box-shadow: 0 0 25px -5px rgba(139, 92, 246, 0.4);
+}
+
+/* Confetti canvas */
+#confetti-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Print Stylesheet for Printable Study Sheets & Worksheets */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  
+  header, nav, footer, #confetti-canvas, .no-print, button, .action-buttons {
+    display: none !important;
+  }
+  
+  .print-only {
+    display: block !important;
+  }
+
+  .page-break {
+    page-break-before: always;
+  }
+
+  .print-card {
+    border: 1px solid #ccc !important;
+    break-inside: avoid;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+  }
+}
