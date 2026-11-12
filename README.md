@@ -98,7 +98,7 @@ flowchart TD
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/sarthakraghuwanshi13-lang/ai-quiz-flashcards.git
+git clone https://github.com/aaryagupta09/ai-quiz-flashcards.git
 cd ai-quiz-flashcards
 ```
 
